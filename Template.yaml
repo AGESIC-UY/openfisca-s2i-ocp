@@ -120,13 +120,6 @@ objects:
       to:
         kind: ImageStreamTag
         name: ${APP_NAME}-backend:latest
-    triggers:
-      - imageChange:
-          from:
-            kind: ImageStreamTag
-            name: ${APP_NAME}-base:latest
-        type: ImageChange
-
 
 ###################################################################
 # DeploymentConfig Objects
@@ -154,7 +147,7 @@ objects:
           deploymentconfig: ${APP_NAME}
       spec:
         containers:
-        - image: ""
+        - image: ${APP_NAME}-backend
           imagePullPolicy: Always
           name: ${APP_NAME}
           ports:
