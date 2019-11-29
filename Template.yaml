@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: openfisca-backend-s2i
+  annotations:
+    description: Template de despliegue del framework Openfisca a través de un s2i
+    iconClass: icon-python
+    tags: python, openfisca
+    template.openshift.io/documentation-url: http://gitlab.paas.agesic.red.uy/franklin.gomez/grafana-mysql-agent.git
+    template.openshift.io/long-description: Template de despliegue de un grafana para monitorear una Instancia MySQL
+    template.openshift.io/provider-display-name: AGESIC
+message:
+
+parameters:
+# Parámetros generales
+  - name: APP_NAME
+    description: Nombre con el que identificar todos los objetos declarados en el template para la aplicación
+    value: openfisca
+    required: true
+# Parámetros para el acceso al GIT
+  - name: GIT_Builder_image
+    description: Repositorio GIT donde está definido el Dockerfile y los scripts necesarios para construir la imagen base
+    required: true
+  - name: GIT_Rama_Builder_image
+    description: Rama dentro del GIT
+    value: master
+    required: true  
+  - name: GIT_Code
+    description: Repositorio GIT donde está definidos el paquete de país modelado con Openfisca
+    required: true
+  - name: GIT_Rama_Code
+    description: Rama dentro del GIT
+    value: master
+    required: true
+
+objects:
+###############################################################################
+# Imagestream Objects
+###############################################################################
+
+# Imagestream para la imagen base (builder image) 
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: ${APP_NAME}-base
+    labels:
+      template: openfisca-backend-s2i
+      app: ${APP_NAME}
+  spec:
+    dockerImageRepository: ""
+
+# Imagestream para la imagen resultante del s2i (builder image) + (codigo desde el git)
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: ${APP_NAME}-backend
+    labels:
+      template: openfisca-backend-s2i
+      app: ${APP_NAME}
+  spec:
+    dockerImageRepository: ""
+
+
+###############################################################################
+# Buildconfig Objects
+##############################################################################
+      
+# Construcción de la imagen base (builder image) para utilizar en el s2i        
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      "template.alpha.openshift.io/wait-for-ready": "true"
+    labels:
+      template: openfisca-backend-s2i
+      app: ${APP_NAME}
+    name: ${APP_NAME}-base
+  spec:
+    successfulBuildsHistoryLimit: 2
+    failedBuildsHistoryLimit: 2
+    source:
+      type: Git
+      git:
+        uri: ${GIT_Builder_image}
+        ref: ${GIT_Rama_Builder_image}
+    strategy:
+      dockerStrategy:
+        dockerfilePath: Dockerfile
+      type: Docker
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APP_NAME}-base:latest
+
+# Construcción de la imagen del backend de openfisca a partir de un s2i con la imagen base y el código de la aplicación
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      "template.alpha.openshift.io/wait-for-ready": "true"
+    labels:
+      template: openfisca-backend-s2i
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    successfulBuildsHistoryLimit: 2
+    failedBuildsHistoryLimit: 2
+    source:
+      type: Git
+      git:
+        uri: ${GIT_Code}
+        ref: ${GIT_Rama_Code}
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}-base:latest
+    type: Source
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APP_NAME}-backend:latest
+    triggers:
+      - imageChange:
+          from:
+            kind: ImageStreamTag
+            name: ${APP_NAME}-base:latest
+        type: ImageChange
+
+
+###################################################################
+# DeploymentConfig Objects
+####################################################################
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      "template.alpha.openshift.io/wait-for-ready": "true"
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    replicas: 1
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
+      spec:
+        containers:
+        - image: ""
+          imagePullPolicy: Always
+          name: ${APP_NAME}
+          ports:
+          - containerPort: 5000
+            protocol: TCP
+          resources: {}
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}-backend:latest
+      type: ImageChange
+
+############################################################################################
+# Services Objects
+############################################################################################      
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    ports:
+    - name: 5000-tcp
+      port: 5000
+      protocol: TCP
+      targetPort: 5000
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}

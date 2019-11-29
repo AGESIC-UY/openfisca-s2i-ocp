@@ -1,0 +1,20 @@
+#!/bin/bash -e
+#
+# S2I run script for the 'openfisca-backend' image.
+# The run script executes the server that runs your application.
+#
+# For more information see the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+
+# Adding the user dynamically to /etc/passwd 
+export HOME=$APP_ROOT
+
+if ! whoami &> /dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "openfisca-default:x:$(id -u):0:openfisca user,,,:$APP_ROOT:/sbin/nologin" >> /etc/passwd
+  fi
+fi
+
+# Running openfisca script
+exec openfisca serve --bind=0.0.0.0:5000
