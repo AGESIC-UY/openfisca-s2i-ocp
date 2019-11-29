@@ -1,22 +1,9 @@
 
-# Creating a Openfisca Framework Images from S2I !!!
+## Creating a Openfisca Framework Template using S2I strategy
 
-## Getting started
+This repository contains the Dockerfile file and the necessary scripts as sources for the construction of the base image. Necessary object (nuilder image) for the construction of the final image of the application using an s2i strategy.
 
-### Files and Directories  
-
-##### assemble
-Create an *assemble* script that will build our application, e.g.:
-- build python modules
-- bundle install ruby gems
-- setup application specific configuration
-
-The script can also specify a way to restore any saved artifacts from the previous image.   
-
-#### Create the builder image
-The following command will create a builder image named openfisca-backend based on the Dockerfile that was created previously.
+### Template Instantiation
 ```
-docker build -t openfisca-backend .
+oc create -f Template.yaml
 ```
-The builder image can also be created by using the *make* command since a *Makefile* is included.
-
