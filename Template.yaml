@@ -6,8 +6,7 @@ metadata:
     description: Template de despliegue del framework Openfisca a través de un s2i
     iconClass: icon-python
     tags: python, openfisca
-    template.openshift.io/documentation-url: http://gitlab.paas.agesic.red.uy/franklin.gomez/grafana-mysql-agent.git
-    template.openshift.io/long-description: Template de despliegue de un grafana para monitorear una Instancia MySQL
+    template.openshift.io/long-description: Template de despliegue del backend de Openfisca framework en Openshift a partir de una estrategia s2i
     template.openshift.io/provider-display-name: AGESIC
 message:
 
@@ -24,7 +23,7 @@ parameters:
   - name: GIT_Rama_Builder_image
     description: Rama dentro del GIT
     value: master
-    required: true  
+    required: true
   - name: GIT_Code
     description: Repositorio GIT donde está definidos el paquete de país modelado con Openfisca
     required: true
@@ -38,7 +37,7 @@ objects:
 # Imagestream Objects
 ###############################################################################
 
-# Imagestream para la imagen base (builder image) 
+# Imagestream para la imagen base (builder image)
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -64,8 +63,8 @@ objects:
 ###############################################################################
 # Buildconfig Objects
 ##############################################################################
-      
-# Construcción de la imagen base (builder image) para utilizar en el s2i        
+
+# Construcción de la imagen base (builder image) para utilizar en el s2i
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -168,7 +167,7 @@ objects:
 
 ############################################################################################
 # Services Objects
-############################################################################################      
+############################################################################################
 
 - apiVersion: v1
   kind: Service
