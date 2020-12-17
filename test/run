@@ -61,7 +61,7 @@ prepare() {
   fi
   # s2i build requires the application is a valid 'Git' repository
   pushd ${test_dir}/test-app >/dev/null
-  git clone --depth 1 https://github.com/openfisca/country-template.git
+  git clone --depth 1 https://github.com/openfisca/country-template.git ./test/test-app/country-template
   popd >/dev/null
   run_s2i_build
 }

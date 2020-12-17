@@ -14,14 +14,14 @@ LABEL io.k8s.description="Builder Image for Openfisca Framework based on Pyhton"
 
 ENV APP_ROOT=/opt/app-root
 # Adding openfisca script path to $PATH
-ENV PATH=$APP_ROOT/.local/bin/:$PATH 
+ENV PATH=$APP_ROOT/.local/bin/:$PATH
 
 
 # TODO: Install required packages here:
 RUN apk --no-cache update && \
     apk add --no-cache git make gcc musl-dev linux-headers python3-dev libstdc++ g++ bash
 
-# Install the requiered libraries for python 
+# Install the requiered libraries for python
 RUN pip install -I --no-cache-dir pip numpy pyyaml
 
 # TODO (optional): Copy the builder files into /opt/app-root
